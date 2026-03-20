@@ -6,6 +6,26 @@ import socket
 class SSL_Utils:
     def __init__(self):
         self.ca_path = "/etc/ssl/certs/ca-bundle.crt"
+
+    def do_handshake_validate(func):
+        @wraps(func)
+        def conn_wrapper(hostname, port):
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+            try:
+                with socket.create_connection((hostname, port)) as sock:
+                    with ctx.wrap_socket(sock, server_hostname=hostname,
+                                        do_handshake_on_connect=True) as ssock:
+                        pass
+            except Exception as e:
+                return f"{e}"
+
+        return conn_wrapper
+    
+    @do_handshake_validate
+    def create_connection(self, hostname, port):
+        pass
+
     def get_cert(self, hostname, port):
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         # ctx.load_verify_locations(self.ca_path)
